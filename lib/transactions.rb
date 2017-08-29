@@ -1,8 +1,10 @@
+require 'csv_reader'
+
 module CSVOperations
 
   class Transaction
-
-    attr_accessor :validation_only, :dtaus, :errors
+    attr_reader :errors
+    attr_accessor :validation_only, :dtaus
     def initialize(row)
       @row = row
       @errors = []
@@ -20,7 +22,7 @@ module CSVOperations
     end
     private
     def add_account_transfer
-      sender = get_sender
+      sender = get_sender      
       return @errors.last unless sender
 
       if row.depot_activity_id.blank?
@@ -79,9 +81,9 @@ module CSVOperations
     private
     def add_dta_row
       unless dtaus.valid_sender?(row.sender_konto, row.sender_blz)
-        return errors << "#{row.activity}: BLZ/Konto not valid, csv fiile not written"
+        return @errors << "#{row.activity}: BLZ/Konto not valid, csv fiile not written"
       end
-      holder = Iconv.iconv('ascii//translit', 'utf-8', row['SENDER_NAME']).to_s.gsub(/[^\w^\s]/, '') #rewrite without Iconv
+      holder = CSVReader.convert_acsii(row.sender_name)
       dtaus.add_buchung(row.sender_konto, row.sender_blz, holder, BigDecimal(row.amount).abs, row.import_subject)
     end
   end

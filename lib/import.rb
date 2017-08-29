@@ -50,7 +50,7 @@ module CSVOperations
           errors << "#{row.activity}: #{Row::HEADERS[:umsatz_key]} #{row.umsatz_key} is not allowed"
           break
         end
-        import_file_row_with_error_handling(row)
+        repeat_row_import(row)
         line += 1
         break unless errors.empty?
         success_rows << row.activity
@@ -61,7 +61,7 @@ module CSVOperations
       {:success => success_rows, :errors => errors}
     end
 
-    def import_file_row_with_error_handling(row)
+    def repeat_row_import(row)
       self.import_retry_count = 0
       5.times do
         self.import_retry_count += 1
