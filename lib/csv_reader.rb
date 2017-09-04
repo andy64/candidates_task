@@ -1,4 +1,5 @@
 require 'row'
+require 'stringex/unidecoder'
 
 module CSVOperations
   module CSVReader
@@ -8,8 +9,9 @@ module CSVOperations
       end
     end
 
-    def convert_acsii(str)
+    def self.convert_acsii(str)
       #  Iconv.iconv('ascii//translit', 'utf-8', str).to_s.gsub(/[^\w^\s]/, '')
-      str.encode("ascii//translit", :invalid => :replace, :undef => :replace, :replace => '').gsub(/[^\w^\s]/, '')
+      Stringex::Unidecoder.decode(str)
+    end
   end
 end

@@ -92,7 +92,7 @@ module CSVOperations
     def successful_import(local_file_path, send_email)
       File.delete(local_file_path)
       BackendMailer.send_import_feedback('Successful Import', "Import of the file #{File.basename(local_file_path)} done.") if send_email
-      "Success"
+      'Success'
     end
 
     def failed_import(local_file_path, result)
@@ -110,7 +110,7 @@ module CSVOperations
     def upload_error_file(entry, result)
       FileUtils.mkdir_p FilesManager.local_data_upload_path
       error_file_local_path = FilesManager.local_data_upload_path + entry
-      File.open(error_file_local_path, "w") { |f| f.write(result) }
+      File.open(error_file_local_path, 'w') { |f| f.write(result) }
       RemoteConnector.new.upload_file(error_file_local_path, FilesManager.error_file_upload_path(entry))
     end
   end

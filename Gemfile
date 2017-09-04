@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gem 'net-sftp'
 gem 'activesupport'
+gem 'stringex'
 
 group :test do
  gem 'rspec'

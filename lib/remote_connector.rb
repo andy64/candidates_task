@@ -10,17 +10,17 @@ module CSVOperations
                      else
                        '0.0.0.0:2020'
                      end
-      @ftp_user = "some-ftp-user"
+      @ftp_user = 'some-ftp-user'
     end
 
     def upload_file(file, path_to_upload)
-      Net::SFTP.start(@sftp_server, @ftp_user, :keys => ["path-to-credentials"]) do |sftp|
+      Net::SFTP.start(@sftp_server, @ftp_user, :keys => ['path-to-credentials']) do |sftp|
         sftp.upload!(file, path_to_upload)
       end
     end
 
     def download_files
-      Net::SFTP.start(@sftp_server, @ftp_user, :keys => ["path-to-credentials"]) do |sftp|
+      Net::SFTP.start(@sftp_server, @ftp_user, :keys => ['path-to-credentials']) do |sftp|
         remote_files_list = sftp.dir.entries(remote_csv_path).map { |e| e.name }
         downloaded_files = []
         #why sorting?

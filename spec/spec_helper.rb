@@ -1,5 +1,6 @@
 require 'bundler/setup'
 require 'active_support/all'
+require 'rspec'
 
 module Rails
   extend self
