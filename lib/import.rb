@@ -33,10 +33,10 @@ module CSVOperations
       result = begin
         import_file(local_file_path)
       rescue => e
-        {:errors => [e.to_s], :success => ['data lost']}
+        {:success => ['data lost'], :errors => [e.to_s] }
       end
 
-      logger_res = result[:errors].blank? ? successful_import(local_file_path, send_email) : failed_import(local_file_path, result)
+      logger_res = result[:errors].blank? ? successful_import(local_file_path) : failed_import(local_file_path, result)
       Rails.logger.info "CsvExporter#import time: #{Time.now.to_formatted_s(:db)} Imported #{local_file_path}: #{logger_res}"
     end
 
@@ -64,7 +64,10 @@ module CSVOperations
       @import_retry_count = 0
       5.times do
         @import_retry_count += 1
-        return true if import_row(row)
+        if import_row(row)
+          @import_retry_count.times{ errors.pop }
+          return true
+        end
       end
       nil
     end

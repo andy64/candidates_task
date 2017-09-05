@@ -65,19 +65,38 @@ describe 'Import' do
       @import.repeat_row_import(Row.new(@row))
       @import.import_retry_count.should == 5
     end
+    it 'doesn\'t log error if last attempt passed' do
+      allow(@import).to receive(:import_row).and_return{
+        @import.errors.push('error text')
+        @import.import_retry_count==3
+      }
+      @import.repeat_row_import(Row.new(@row))
+      @import.errors.blank?.should be true
+    end
   end
 
   describe '.import_file' do
-    it 'imports the file' do
+    before(:each) do
       FileUtils.rm_rf 'temp'
       allow(PathManager).to receive(:tmp_mraba).and_return 'temp'
       stub_const('CSVOperations::Row::Account', Class.new)
       allow(CSVOperations::Row::Account)
           .to receive(:find_by_account_no)
                   .and_return double('account', :build_transfer=>double('bank_transfer', save!: true, valid?: true))
+    end
+
+    it 'imports the file' do
       rez = @import.import_file "spec/fixtures/sftp_server_dir/#{remote_csv_path}/csv_exporter.csv"
       rez[:success].first.should == '07'
       rez[:errors].size.should == 10
     end
   end
+
+
+    it 'imports empty file' do
+      rez = @import.import_file "spec/fixtures/csv_empty.csv"
+      rez[:success].blank?.should be true
+      rez[:errors].blank?.should be true
+    end
+
 end
