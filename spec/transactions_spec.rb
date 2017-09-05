@@ -1,19 +1,14 @@
 require 'spec_helper'
 require_relative '../lib/transactions'
 
-
-# Fakes for outside objects
-class Account
-  def self.find_by_account_no(*)
-  end
-end
+include CSVOperations::Transactions
 include CSVOperations
 
 describe 'Transactions' do
   describe '.get_sender' do
     before(:each) do
       @account = double
-      @row = Row.new({'SENDER_KONTO' => '000000001', 'ACTIVITY_ID' => 12})
+      @row = Row.new({Row::HEADERS[:sender_konto] => '000000001', Row::HEADERS[:activity] => 12})
       @row.stub(:sender) { @account }
       @trans = Transaction.new(@row)
     end
@@ -36,6 +31,7 @@ describe 'Transactions' do
         @account = double :account_no => '000000001'
         @account_transfer = double('date=': nil, 'skip_mobile_tan=': nil, valid?: nil,
                                    errors: double(full_messages: []), save!: true)
+        stub_const('Account', Class.new)
         Account.stub(:find_by_account_no).and_return @account
         row = {Row::HEADERS[:amount] => 10,
                Row::HEADERS[:entry_date] => Date.today,
@@ -75,6 +71,7 @@ describe 'Transactions' do
       it 'returns error if sender not found' do
         prepare_instance_vars do |h|
           h[Row::HEADERS[:activity]] = 12
+          stub_const('Account', Class.new)
           Account.stub(:find_by_account_no).and_return nil
         end
         @trans.proc_transaction.should be false
@@ -134,6 +131,7 @@ describe 'Transactions' do
         @trans = BankTransfer.new(Row.new(row))
         bank_transfer = double :valid? => true, :save! => true
         @account = double :build_transfer => bank_transfer
+        stub_const('Account', Class.new)
       end
 
       it 'adds bank transfer' do
@@ -168,7 +166,7 @@ describe 'Transactions' do
 
       it 'adds dta row' do
         @dtaus.stub(:valid_sender?).with('0101881952', '30020900').and_return true
-        @dtaus.should_receive(:add_buchung).with('0101881952', '30020900', 'Max Mustermann', 10, 'Subject')
+        @dtaus.should_receive(:add_buchung).with('0101881952', '30020900', 'Max Mustermann', 10, 'Subject').once
         @trans.dtaus = @dtaus
         @trans.proc_transaction
       end

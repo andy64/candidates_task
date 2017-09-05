@@ -140,15 +140,7 @@ describe CsvExporter do
 
 
 
-  describe '.import_subject(row)' do
-    before(:each) do
-      @row = {'DESC1' => 'Sub', 'DESC2' => 'ject'}
-    end
 
-    it 'returns subject from row' do
-      CsvExporter.import_subject(@row).should == 'Subject'
-    end
-  end
 
 
 end

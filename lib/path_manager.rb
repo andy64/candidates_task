@@ -1,5 +1,5 @@
 module CSVOperations
-  module FilesManager
+  module PathManager
     def local_download_path
       defined?(Rails) ? "#{Rails.root.to_s}/private/data/download/" : "#{Dir.home}/temp_csv_importer/private/data/download/"
     end
