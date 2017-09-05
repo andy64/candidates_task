@@ -2,28 +2,6 @@
 require 'spec_helper'
 require_relative '../lib/csv_exporter'
 
-# Fakes for outside objects
-class Account
-  def self.find_by_account_no(*)
-  end
-end
-
-module Mraba
-  class Transaction
-    def self.define_dtaus(*args)
-      new
-    end
-
-    def valid_sender?(*)
-    end
-
-    def add_buchung(*)
-    end
-
-    def add_datei(*)
-    end
-  end
-end
 
 module BackendMailer
   extend self
@@ -104,43 +82,6 @@ describe CsvExporter do
       CsvExporter.import(nil).should == 'Imported: data lost Errors: RuntimeError'
     end
   end
-
-
-  describe '.import_file_row_with_error_handling(row, validation_only = false)' do
-    before(:each) do
-      @errors = []
-      @dtaus = double
-    end
-
-    it 'successful import' do
-      row = {
-        'RECEIVER_BLZ' => '00000000',
-        'SENDER_BLZ' => '00000000',
-        'ACTIVITY_ID' => '1'
-      }
-
-      CsvExporter.stub(:add_account_transfer).and_return(true)
-      CsvExporter.import_file_row_with_error_handling(row, false, @errors, @dtaus).should == [@errors,@dtaus]
-      CsvExporter.import_retry_count.should == 1
-    end
-
-    it 'handles exception in row' do
-      row = {
-        'RECEIVER_BLZ' => '00000000',
-        'SENDER_BLZ' => '00000000',
-        'ACTIVITY_ID' => '1'
-      }
-
-      CsvExporter.stub(:add_account_transfer).and_raise(RuntimeError)
-      CsvExporter.import_file_row_with_error_handling(row, false, @errors, @dtaus)[0].should == ['1: RuntimeError']
-      CsvExporter.import_retry_count.should == 1
-    end
-  end
-
-
-
-
-
 
 
 end

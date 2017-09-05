@@ -27,7 +27,7 @@ module CSVOperations
       private
       def add_account_transfer
         sender = get_sender
-        return false unless sender
+        return unless sender
 
         if @row.depot_activity_id.blank?
           account_transfer = sender.credit_account_transfers.build(:amount => @row.amount.to_f, :subject => @row.import_subject, :receiver_multi => @row.receiver_konto)
@@ -47,7 +47,7 @@ module CSVOperations
         end
         if account_transfer && !account_transfer.valid?
           @errors << "#{@row.activity}: AccountTransfer validation error(s): #{account_transfer.errors.full_messages.join('; ')}"
-          return false
+          return
         end
         @row.depot_activity_id.blank? ? account_transfer.save! : account_transfer.complete_transfer! unless validation_only
       end
@@ -61,7 +61,7 @@ module CSVOperations
       private
       def add_bank_transfer
         sender = get_sender
-        return false unless sender
+        return unless sender
 
         bank_transfer = sender.build_transfer(
             amount: @row.amount.to_f,
@@ -73,7 +73,7 @@ module CSVOperations
 
         unless bank_transfer.valid?
           @errors << "#{@row.activity}: BankTransfer validation error(s): #{bank_transfer.errors.full_messages.join('; ')}"
-          return false
+          return
         end
         bank_transfer.save! unless validation_only
       end
@@ -88,7 +88,7 @@ module CSVOperations
       def add_dta_row
         unless dtaus.valid_sender?(@row.sender_konto, @row.sender_blz)
           @errors << "#{@row.activity}: BLZ/Konto not valid, csv fiile not written"
-          return false
+          return
         end
         holder = Stringex::Unidecoder.decode(@row.sender_name)
         amount_d = @row.amount.to_d.abs

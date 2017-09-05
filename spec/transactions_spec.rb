@@ -3,7 +3,6 @@ require_relative '../lib/transactions'
 
 include Transactions
 
-
 describe 'Transactions' do
   describe '.get_sender' do
     before(:each) do

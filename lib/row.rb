@@ -21,7 +21,7 @@ module CSVOperations
       Account.find_by_account_no(sender_konto)
     end
 
-    def transaction_type
+    def transaction
       # how to determine 1 or 2 branch is true ?
       if sender_blz == '00000000' and receiver_blz == '00000000'
         return Transactions::AccountTransfer.new(self)
@@ -39,7 +39,7 @@ module CSVOperations
       subject
     end
 
-    def validate_import
+    def is_import_valid?
       %w(10 16).include?(umsatz_key)
     end
 

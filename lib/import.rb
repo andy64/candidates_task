@@ -8,13 +8,15 @@ module CSVOperations
 
 
   class Import
-    attr_accessor :import_retry_count
-    attr_reader :dtaus, :validation_only
+    attr_accessor :errors
+    attr_reader :dtaus, :validation_only, :send_email, :import_retry_count
 
-    def initialize(validation_only=false)
+    def initialize(send_email=false, validation_only=false)
       @errors = []
       @dtaus = get_dtaus
       @validation_only = validation_only
+      @send_email = send_email
+      @import_retry_count = 0
     end
 
     def do_transfer_and_import(send_email=true)
@@ -27,7 +29,7 @@ module CSVOperations
     end
 
 
-    def import(local_file_path, send_email)
+    def import(local_file_path)
       result = begin
         import_file(local_file_path)
       rescue => e
@@ -39,56 +41,58 @@ module CSVOperations
     end
 
     def import_file(file)
-      line = 2
       success_rows = []
-      FileUtils.mkdir_p FilesManager.tmp_mraba
-
+      validation_errors = []
+      FileUtils.mkdir_p PathManager.tmp_mraba
       CSVReader.read(file).each do |row|
-        next if row.activity.blank?
-        unless row.validate_import
-          errors << "#{row.activity}: #{Row::HEADERS[:umsatz_key]} #{row.umsatz_key} is not allowed"
-          break
+        next if row.activity.blank? #skip row if activity_id is not defined
+        unless row.is_import_valid?
+          validation_errors << "#{row.activity}: #{Row::HEADERS[:umsatz_key]} #{row.umsatz_key} is not allowed"
+          next
         end
-        repeat_row_import(row)
-        line += 1
-        break unless errors.empty?
+        next unless repeat_row_import(row)
         success_rows << row.activity
       end
       if errors.empty? and !validation_only and !dtaus.is_empty?
-        dtaus.add_datei(FilesManager.mraba_csv_file)
+        dtaus.add_datei(PathManager.mraba_csv_file)
       end
+      errors.unshift *validation_errors
       {:success => success_rows, :errors => errors}
     end
 
     def repeat_row_import(row)
-      self.import_retry_count = 0
+      @import_retry_count = 0
       5.times do
-        self.import_retry_count += 1
-        break if import_file_row(row)
+        @import_retry_count += 1
+        return true if import_row(row)
       end
+      nil
     end
 
-    def import_file_row(row)
-      trans = row.transaction_type
-      if trans
-        trans.validation_only = validation_only
-        trans.dtaus = dtaus
-        begin
-          trans.proc_transaction
-          errors << trans.errors
-        rescue => e
-          errors << "#{row.activity}: #{e.to_s}"
-        end
-        true
-      else
-        errors << "#{row.get_activity}: Transaction type not found"
-        false
+    def import_row(row)
+      trans = row.transaction
+      unless trans
+        errors << "#{row.activity}: Transaction type not found"
+        return
       end
+      trans.validation_only = validation_only
+      trans.dtaus = dtaus
+      begin
+        trans.proc_transaction
+      rescue => e
+        errors << "#{row.activity}: #{e.to_s}"
+        return
+      end
+      unless trans.errors.size==0
+        errors.push *trans.errors
+        return
+      end
+      true
     end
 
 
     private
-    def successful_import(local_file_path, send_email)
+    def successful_import(local_file_path)
       File.delete(local_file_path)
       BackendMailer.send_import_feedback('Successful Import', "Import of the file #{File.basename(local_file_path)} done.") if send_email
       'Success'
