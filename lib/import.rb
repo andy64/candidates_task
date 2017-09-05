@@ -1,9 +1,8 @@
 # encoding: utf-8
-
-require 'remote_connector'
-require 'transactions'
-require 'row'
-require 'csv_reader'
+require_relative 'remote_connector'
+require_relative 'transactions'
+require_relative 'row'
+require_relative 'csv_reader'
 
 module CSVOperations
 

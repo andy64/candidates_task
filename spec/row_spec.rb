@@ -2,8 +2,7 @@ require 'spec_helper'
 require_relative '../lib/row'
 require_relative '../lib/transactions'
 
-include CSVOperations
-include CSVOperations::Transactions
+include Transactions
 
 describe '.transaction_type(row)' do
   it 'returns AccountTransfer' do

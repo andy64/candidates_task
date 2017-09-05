@@ -1,4 +1,5 @@
 require 'csv_reader'
+require 'stringex/unidecoder'
 
 module CSVOperations
   module Transactions
@@ -89,7 +90,7 @@ module CSVOperations
           @errors << "#{@row.activity}: BLZ/Konto not valid, csv fiile not written"
           return false
         end
-        holder = CSVReader.convert_acsii(@row.sender_name)
+        holder = Stringex::Unidecoder.decode(@row.sender_name)
         amount_d = @row.amount.to_d.abs
         amount_d = amount_d.to_i if amount_d == amount_d.to_i #not sure about expected value int or decimal
         rez = dtaus.add_buchung(@row.sender_konto, @row.sender_blz, holder, amount_d, @row.import_subject)

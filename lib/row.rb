@@ -1,4 +1,4 @@
-require 'transactions'
+require_relative 'transactions'
 
 module CSVOperations
 

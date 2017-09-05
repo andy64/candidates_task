@@ -1,8 +1,8 @@
 require 'spec_helper'
 require_relative '../lib/transactions'
 
-include CSVOperations::Transactions
-include CSVOperations
+include Transactions
+
 
 describe 'Transactions' do
   describe '.get_sender' do
