@@ -30,6 +30,7 @@ module CSVOperations
       elsif receiver_blz == '70022200' and ['16'].include?(umsatz_key)
         return Transactions::Lastschrift.new(self)
       end
+      rescue
       nil
     end
 

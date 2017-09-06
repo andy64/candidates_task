@@ -9,7 +9,12 @@ module CSVOperations
     end
 
     def source_path
-      "#{Rails.root.to_s}/private/upload"
+      if(defined? Rails)
+        "#{Rails.root.to_s}/private/upload/"
+      else
+        Dir.home + '/private/upload/'
+      end
+
     end
 
     def path_and_name
@@ -21,7 +26,11 @@ module CSVOperations
     end
 
     def local_data_upload_path
-      "#{Rails.root.to_s}/private/data/upload"
+      if defined?(Rails)
+        "#{Rails.root.to_s}/private/data/upload/"
+      else
+       Dir.home + '/private/data/upload/'
+      end
     end
 
     def tmp_mraba

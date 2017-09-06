@@ -3,15 +3,15 @@ require_relative 'remote_connector'
 require_relative 'transactions'
 require_relative 'row'
 require_relative 'csv_reader'
+require_relative 'reporter'
 
 module CSVOperations
-
 
   class Import
     attr_accessor :errors
     attr_reader :dtaus, :validation_only, :send_email, :import_retry_count
 
-    def initialize(send_email=false, validation_only=false)
+    def initialize(send_email=true, validation_only=false)
       @errors = []
       @dtaus = get_dtaus
       @validation_only = validation_only
@@ -19,7 +19,7 @@ module CSVOperations
       @import_retry_count = 0
     end
 
-    def do_transfer_and_import(send_email=true)
+    def do_transfer_and_import
       FileUtils.mkdir_p(local_download_path)
       local_file_paths = RemoteConnector.new.download_files
 
@@ -28,16 +28,13 @@ module CSVOperations
       end
     end
 
-
     def import(local_file_path)
       result = begin
         import_file(local_file_path)
       rescue => e
-        {:success => ['data lost'], :errors => [e.to_s] }
+        {success: ['data lost'], errors: [e.to_s] }
       end
-
-      logger_res = result[:errors].blank? ? successful_import(local_file_path) : failed_import(local_file_path, result)
-      Rails.logger.info "CsvExporter#import time: #{Time.now.to_formatted_s(:db)} Imported #{local_file_path}: #{logger_res}"
+      Reporter.new(local_file_path, result, @send_email).report_results
     end
 
     def import_file(file)
@@ -53,11 +50,11 @@ module CSVOperations
         next unless repeat_row_import(row)
         success_rows << row.activity
       end
-      if errors.empty? and !validation_only and !dtaus.is_empty?
-        dtaus.add_datei(PathManager.mraba_csv_file)
+      if errors.empty? and !validation_only and dtaus
+        dtaus.add_datei(PathManager.mraba_csv_file) unless dtaus.is_empty?
       end
       errors.unshift *validation_errors
-      {:success => success_rows, :errors => errors}
+      {success: success_rows, errors: errors}
     end
 
     def repeat_row_import(row)
@@ -65,7 +62,7 @@ module CSVOperations
       5.times do
         @import_retry_count += 1
         if import_row(row)
-          @import_retry_count.times{ errors.pop }
+          @import_retry_count.times{ errors.pop } unless @import_retry_count==1
           return true
         end
       end
@@ -93,31 +90,10 @@ module CSVOperations
       true
     end
 
-
     private
-    def successful_import(local_file_path)
-      File.delete(local_file_path)
-      BackendMailer.send_import_feedback('Successful Import', "Import of the file #{File.basename(local_file_path)} done.") if send_email
-      'Success'
-    end
-
-    def failed_import(local_file_path, result)
-      filename = File.basename(local_file_path)
-      error_content = ["Import of the file #{filename} failed with errors:", result].join("\n")
-      upload_error_file(filename, error_content)
-      BackendMailer.send_import_feedback('Import CSV failed', error_content) if send_email
-      "Imported: #{result[:success].join(', ')} Errors: #{result[:errors].join('; ')}"
-    end
-
     def get_dtaus
       Mraba::Transaction.define_dtaus('RS', 8888888888, 99999999, 'Credit collection')
     end
 
-    def upload_error_file(entry, result)
-      FileUtils.mkdir_p FilesManager.local_data_upload_path
-      error_file_local_path = FilesManager.local_data_upload_path + entry
-      File.open(error_file_local_path, 'w') { |f| f.write(result) }
-      RemoteConnector.new.upload_file(error_file_local_path, FilesManager.error_file_upload_path(entry))
-    end
   end
 end

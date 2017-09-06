@@ -14,7 +14,7 @@ module CSVOperations
           @creds[:host] = 'csv.example.com/endpoint/'
         else
           @creds[:host] = '0.0.0.0'
-          @creds[:port] = 2020
+          @creds[:port] = '2020'
         end
         @creds[:user] = 'some-ftp-user'
         @creds[:keys] = ['path-to-credentials']

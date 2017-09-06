@@ -1,4 +1,4 @@
-require 'spec_helper'
+require_relative 'spec_helper'
 require_relative '../lib/transactions'
 
 include Transactions
@@ -56,14 +56,14 @@ describe 'Transactions' do
       it 'fails to add a account_transfer (missing attribute)' do
         prepare_instance_vars { |row| row[Row::HEADERS[:amount]] = nil }
         @trans.validation_only = false
-        @trans.proc_transaction.should be false
+        @trans.proc_transaction.should be nil
         @trans.errors.size.should == 1
       end
 
       it 'fails to add a account_transfer (missing attribute, validation only)' do
         prepare_instance_vars { |row| row[Row::HEADERS[:amount]] = nil }
         @trans.validation_only = true
-        @trans.proc_transaction.should be false
+        @trans.proc_transaction.should be nil
         @trans.errors.size.should == 1
       end
 
@@ -73,7 +73,7 @@ describe 'Transactions' do
           stub_const('Account', Class.new)
           Account.stub(:find_by_account_no).and_return nil
         end
-        @trans.proc_transaction.should be false
+        @trans.proc_transaction.should be nil
         @trans.errors.size.should == 1
         @trans.errors.first.should == '12: Account 000000001 not found'
       end
@@ -140,7 +140,7 @@ describe 'Transactions' do
 
       it 'fails to add bank transfer' do
         Account.stub(:find_by_account_no).with('000000001').and_return nil
-        @trans.proc_transaction.should be false
+        @trans.proc_transaction.should be nil
         @trans.errors.first.should == ': Account 000000001 not found'
         @trans.errors.size.should == 1
       end
@@ -174,7 +174,7 @@ describe 'Transactions' do
         @dtaus.stub(:valid_sender?).with('0101881952', '30020900').and_return false
         @dtaus.should_not_receive(:add_buchung)
         @trans.dtaus = @dtaus
-        @trans.proc_transaction.should be false
+        @trans.proc_transaction.should be nil
         @trans.errors.first.should == '1: BLZ/Konto not valid, csv fiile not written'
         @trans.errors.size.should == 1
       end

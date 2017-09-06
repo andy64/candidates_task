@@ -1,4 +1,4 @@
-require 'spec_helper'
+require_relative 'spec_helper'
 require_relative '../lib/import'
 
 include Transactions
@@ -13,7 +13,7 @@ describe 'Import' do
             Row::HEADERS[:sender_konto] => '000000001',
             Row::HEADERS[:receiver_konto] => '000000002'}
     stub_const('Mraba::Transaction', Class.new)
-    allow(Mraba::Transaction).to receive(:define_dtaus).and_return(double('dtaus', is_empty?: false, add_datei:true))
+    allow(Mraba::Transaction).to receive(:define_dtaus).and_return(double('dtaus', is_empty?: false, add_datei: true))
     @import = Import.new
   end
 
@@ -66,7 +66,7 @@ describe 'Import' do
       @import.import_retry_count.should == 5
     end
     it 'doesn\'t log error if last attempt passed' do
-      allow(@import).to receive(:import_row).and_return{
+      allow(@import).to receive(:import_row).and_return {
         @import.errors.push('error text')
         @import.import_retry_count==3
       }
@@ -82,21 +82,39 @@ describe 'Import' do
       stub_const('CSVOperations::Row::Account', Class.new)
       allow(CSVOperations::Row::Account)
           .to receive(:find_by_account_no)
-                  .and_return double('account', :build_transfer=>double('bank_transfer', save!: true, valid?: true))
+                  .and_return double('account', :build_transfer => double('bank_transfer', save!: true, valid?: true))
     end
 
     it 'imports the file' do
       rez = @import.import_file "spec/fixtures/sftp_server_dir/#{remote_csv_path}/csv_exporter.csv"
-      rez[:success].first.should == '07'
-      rez[:errors].size.should == 10
+      rez[:success].first.should == '03'
+      rez[:success].last.should == '07'
+      rez[:errors].size.should == 14
     end
-  end
-
 
     it 'imports empty file' do
       rez = @import.import_file "spec/fixtures/csv_empty.csv"
       rez[:success].blank?.should be true
       rez[:errors].blank?.should be true
     end
+  end
+
+  describe '.import' do
+    it 'handles exception during import' do
+      allow(@import).to receive(:import_file).with('').and_raise(RuntimeError)
+      Reporter.should_receive(:new).with('', {success: ['data lost'], errors: ['RuntimeError']}, true).once.and_call_original
+      Reporter.any_instance.should_receive(:report_results).once.and_return(true)
+      @import.import('')
+    end
+    it 'import success with error' do
+      h = {:success => [1, 23], :errors => ['2: Transaction not found']}
+      allow(@import).to receive(:import_file).with('').and_return(h)
+      Reporter.should_receive(:new).with('', h, true).once.and_call_original
+      Reporter.any_instance.should_receive(:report_results).once.and_return(true)
+      @import.import('')
+    end
+  end
+
+
 
 end

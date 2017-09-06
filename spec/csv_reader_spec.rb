@@ -1,4 +1,4 @@
-require 'spec_helper'
+require_relative 'spec_helper'
 require_relative '../lib/csv_reader'
 require_relative '../lib/row'
 
@@ -6,7 +6,7 @@ require_relative '../lib/row'
 describe 'CSV reader' do
   it 'reads csv file' do
     rez = CSVReader.read "spec/fixtures/sftp_server_dir/#{remote_csv_path}/csv_exporter.csv"
-    rez.size.should == 5
+    rez.size.should == 8
     rez.last.is_a?(Row).should be true
     rez.each do |row|
       actual = row.keys

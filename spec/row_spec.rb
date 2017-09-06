@@ -1,4 +1,4 @@
-require 'spec_helper'
+require_relative 'spec_helper'
 require_relative '../lib/row'
 require_relative '../lib/transactions'
 
@@ -22,6 +22,12 @@ describe '.transaction' do
 
   it 'returns false' do
     row = Row.new({})
+    row.transaction.should be nil
+  end
+
+  it 'returns nil if exception' do
+    row = Row.new({Row::HEADERS[:sender_blz] => '00000000'})
+    allow_any_instance_of(Row).to receive(:sender_blz).and_raise(StandardError)
     row.transaction.should be nil
   end
 end
