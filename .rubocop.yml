@@ -1,0 +1,13 @@
+
+
+Style/Encoding:
+  Enabled: false
+
+Metrics/LineLength:
+  Max: 99
+
+Metrics/BlockLength:
+  Enabled: false
+
+AllCops:
+  TargetRubyVersion: 2.3.3

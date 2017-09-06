@@ -1,4 +1,7 @@
+# frozen_string_literal: true
+
 module CSVOperations
+  # to send emails, write logs, operate files and errors after passed or failed imports
   class Reporter
     def initialize(local_file_path, result, send_email)
       @local_file_path = local_file_path
@@ -22,7 +25,8 @@ module CSVOperations
 
     def failed_import
       filename = File.basename(@local_file_path)
-      error_content = ["\nImport of the file #{filename} failed with errors:\n", @result[:errors].join("\n")]
+      error_content = ["\nImport of the file #{filename}" \
+                       "failed with errors:\n", @result[:errors].join("\n")]
       upload_error_file(filename, error_content)
       BackendMailer.send_import_feedback('Import CSV failed', error_content) if @send_email
       "Imported: #{@result[:success].join(', ')} Errors: #{@result[:errors].join('; ')}"
@@ -36,7 +40,8 @@ module CSVOperations
     end
 
     def rails_log(logger_res)
-      Rails.logger.info "CsvExporter#import time: #{Time.now.to_formatted_s(:db)} Imported #{@local_file_path}: #{logger_res}"
+      Rails.logger.info("CsvExporter#import time: #{Time.now.to_formatted_s(:db)}" \
+                        "Imported #{@local_file_path}: #{logger_res}")
     end
   end
 end

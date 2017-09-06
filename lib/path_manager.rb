@@ -1,7 +1,14 @@
+# frozen_string_literal: true
+
 module CSVOperations
+  # to store paths to files that are in use by other classes
   module PathManager
     def local_download_path
-      defined?(Rails) ? "#{Rails.root.to_s}/private/data/download/" : "#{Dir.home}/temp_csv_importer/private/data/download/"
+      if defined?(Rails)
+        "#{Rails.root}/private/data/download/"
+      else
+        "#{Dir.home}/temp_csv_importer/private/data/download/"
+      end
     end
 
     def remote_csv_path
@@ -9,12 +16,11 @@ module CSVOperations
     end
 
     def source_path
-      if(defined? Rails)
-        "#{Rails.root.to_s}/private/upload/"
+      if defined? Rails
+        "#{Rails.root}/private/upload/"
       else
         Dir.home + '/private/upload/'
       end
-
     end
 
     def path_and_name
@@ -27,9 +33,9 @@ module CSVOperations
 
     def local_data_upload_path
       if defined?(Rails)
-        "#{Rails.root.to_s}/private/data/upload/"
+        "#{Rails.root}/private/data/upload/"
       else
-       Dir.home + '/private/data/upload/'
+        Dir.home + '/private/data/upload/'
       end
     end
 
@@ -40,6 +46,5 @@ module CSVOperations
     def mraba_csv_file
       "#{path_and_name}_201_mraba.csv"
     end
-
   end
 end

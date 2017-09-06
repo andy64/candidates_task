@@ -1,17 +1,19 @@
+# frozen_string_literal: true
+
 require_relative 'transactions'
 
 module CSVOperations
-
+  # represents the row from csv file as hash extension
   class Row < Hash
-    # attr_reader :activity
-    HEADERS = {sender_konto: 'SENDER_KONTO', sender_name: 'SENDER_NAME', sender_blz: 'SENDER_BLZ', receiver_blz: 'RECEIVER_BLZ',
-               umsatz_key: 'UMSATZ_KEY', activity: 'ACTIVITY_ID', depot_activity_id: 'DEPOT_ACTIVITY_ID',
-               amount: 'AMOUNT', receiver_name: 'RECEIVER_NAME', receiver_konto: 'RECEIVER_KONTO',
-               entry_date: 'ENTRY_DATE', desc1: 'DESC1'
-    }
+    HEADERS = { sender_konto: 'SENDER_KONTO', sender_name: 'SENDER_NAME',
+                sender_blz: 'SENDER_BLZ', receiver_blz: 'RECEIVER_BLZ',
+                umsatz_key: 'UMSATZ_KEY', activity: 'ACTIVITY_ID',
+                depot_activity_id: 'DEPOT_ACTIVITY_ID', amount: 'AMOUNT',
+                receiver_name: 'RECEIVER_NAME', receiver_konto: 'RECEIVER_KONTO',
+                entry_date: 'ENTRY_DATE', desc1: 'DESC1' }.freeze
 
     def initialize(items)
-      self.replace items
+      replace items
       Row.class_eval do
         HEADERS.each { |k, v| define_method(k) { self[v] } }
       end
@@ -19,18 +21,18 @@ module CSVOperations
 
     def sender
       Account.find_by_account_no(sender_konto)
+    rescue
+      nil
     end
 
     def transaction
-      # how to determine 1 or 2 branch is true ?
-      if sender_blz == '00000000' and receiver_blz == '00000000'
-        return Transactions::AccountTransfer.new(self)
-      elsif sender_blz == '00000000' and umsatz_key == '10'
-        return Transactions::BankTransfer.new(self)
-      elsif receiver_blz == '70022200' and ['16'].include?(umsatz_key)
+      if sender_blz == '00000000'
+        return Transactions::AccountTransfer.new(self) if receiver_blz == '00000000'
+        return Transactions::BankTransfer.new(self) if umsatz_key == '10'
+      end
+      if receiver_blz == '70022200' && ['16'].include?(umsatz_key)
         return Transactions::Lastschrift.new(self)
       end
-      rescue
       nil
     end
 
@@ -40,10 +42,8 @@ module CSVOperations
       subject
     end
 
-    def is_import_valid?
-      %w(10 16).include?(umsatz_key)
+    def import_valid?
+      %w[10 16].include?(umsatz_key)
     end
-
   end
 end
-
